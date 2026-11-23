@@ -38,5 +38,15 @@
     "min_observed": -19.5,
     "max_observed": -19.3,
     "sealed_at": "2026-11-10T10:00:00"
+  },
+  {
+    "batch_code": "TB-CK-XN-04-001",
+    "chamber_code": "CK-XN-04",
+    "probe_code": "PR-XN-D1",
+    "cargo_ref": "试剂箱 X-07（残留尖峰夹具）",
+    "status": "已入库",
+    "temp_points": [{"t": "07:00", "c": -2.1}, {"t": "08:00", "c": 2.6}, {"t": "09:00", "c": -1.4}],
+    "min_observed": -2.1,
+    "max_observed": 2.6
   }
 ]

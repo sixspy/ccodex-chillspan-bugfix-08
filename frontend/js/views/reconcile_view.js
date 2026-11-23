@@ -11,10 +11,11 @@ export const reconcileViewTemplate = `
     <button class="secondary" @click="loadReconAll">全仓对账</button>
   </div>
   <div v-if="reconOne" class="detail-box">
-    <p>配额 {{ reconOne.quota_batches }} · 在批 {{ reconOne.active_batches }} · <span :class="reconOne.balanced ? 'ok' : 'bad'">{{ reconOne.balanced ? "平衡" : "失衡" }}</span></p>
+    <p>配额 {{ reconOne.quota_batches }} · 在批 {{ reconOne.active_batches }} · <span :class="reconOne.balanced ? 'ok' : 'bad'">{{ reconOne.balanced ? "平衡" : "失衡" }}</span> · 残留批次 {{ reconOne.clearing ? reconOne.clearing.residual_batches : 0 }} · 尖峰/游标 <span class="badge" :class="clearingClass(reconOne.clearing && reconOne.clearing.cursor_spike_consistent)">{{ reconOne.clearing && reconOne.clearing.cursor_spike_consistent ? "已清点火" : "残留未清" }}</span></p>
   </div>
   <div v-if="proofOne" class="detail-box">
-    <p>状态 {{ proofOne.status }} · 开放游标 {{ proofOne.open_excursions }} · 温谱 {{ proofOne.spectrum_exports }}</p>
+    <p>状态 {{ proofOne.status }} · 开放游标 {{ proofOne.open_excursions }} · 温谱 {{ proofOne.spectrum_exports }} · 残留峰值 {{ fmtTemp(proofOne.residual_peak) }} · 尖峰/游标 <span class="badge" :class="clearingClass(proofOne.cursor_spike_consistent)">{{ proofOne.cursor_spike_consistent ? "已清点火" : "残留未清" }}</span></p>
+    <p class="hint">同步来源：{{ proofOne.memo }}（{{ proofOne.path }}路）</p>
   </div>
   <table class="data-table">
     <thead><tr><th>仓间</th><th>区域</th><th>在批</th><th>余配额</th><th>平衡</th></tr></thead>

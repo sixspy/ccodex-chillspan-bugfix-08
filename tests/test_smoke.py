@@ -40,7 +40,7 @@ def test_inbound_excursion_seal_spectrum_flow():
     probe = probes[0]
     points = [
         {"t": "10:00", "c": 3.0},
-        {"t": "11:00", "c": 8.5},
+        {"t": "11:00", "c": 6.5},
         {"t": "12:00", "c": 4.0},
     ]
     batch = c.post(
@@ -61,7 +61,9 @@ def test_inbound_excursion_seal_spectrum_flow():
         json={"batch_id": batch["id"], "threshold": 7.0},
     )
     assert exc.status_code == 200
-    assert exc.json()["peak_temp"] >= 7.0
+    # 甲路：正式开户只在点火清零后，残留峰值为空。
+    assert exc.json()["spike_cleared"] is True
+    assert exc.json()["residual_peak"] is None
     c.post(
         "/api/excursions/close",
         headers=h,

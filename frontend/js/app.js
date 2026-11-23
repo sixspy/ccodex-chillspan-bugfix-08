@@ -122,6 +122,7 @@ createApp({
       probes.value.filter((p) => p.chamber_id === batchForm.value.chamber_id)
     );
     const openableBatches = computed(() =>
+      // 残留未清批次仍可选中，交给后端按甲路显式拒开并回显残留点，不在前端静默隐藏。
       batches.value.filter((b) => b.status !== "已封批" && b.status !== "草稿")
     );
     const sealableBatches = computed(() =>
@@ -147,6 +148,9 @@ createApp({
     }
     function excursionClass(s) {
       return s === "开放" ? "fail" : "pass";
+    }
+    function clearingClass(consistent) {
+      return consistent ? "pass" : "fail";
     }
     function shortText(t) {
       if (!t) return "";
@@ -502,6 +506,7 @@ createApp({
       statusClass,
       probeOnlineClass,
       excursionClass,
+      clearingClass,
       shortText,
       createChamber,
       loadChamberDetail,

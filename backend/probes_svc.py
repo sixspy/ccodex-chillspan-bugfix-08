@@ -4,6 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from auth import AuthHeader, require_user, require_writer
+from clearing import probe_state
 from db import connect, now_iso, write_audit
 from models import ProbeIn
 
@@ -26,7 +27,12 @@ def list_probes(authorization: AuthHeader = None, chamber_id: int | None = None)
                 """SELECT p.*, c.chamber_code, c.region FROM probes p
                    JOIN cold_chambers c ON c.id=p.chamber_id ORDER BY p.id"""
             ).fetchall()
-        return {"items": [dict(r) for r in rows]}
+        items = []
+        for r in rows:
+            d = dict(r)
+            d["clearing"] = probe_state(conn, r["id"])
+            items.append(d)
+        return {"items": items}
 
 
 @router.get("/api/probes/{probe_id}")
@@ -45,7 +51,11 @@ def get_probe(probe_id: int, authorization: AuthHeader = None):
             "SELECT * FROM calibration_records WHERE probe_id=? ORDER BY id DESC",
             (probe_id,),
         ).fetchall()
-        return {"probe": dict(row), "calibrations": [dict(x) for x in cals]}
+        return {
+            "probe": dict(row),
+            "clearing": probe_state(conn, probe_id),
+            "calibrations": [dict(x) for x in cals],
+        }
 
 
 @router.post("/api/probes")

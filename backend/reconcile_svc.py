@@ -4,6 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from auth import AuthHeader, require_user
+from clearing import batch_state, chamber_state
 from db import connect
 
 router = APIRouter(tags=["reconcile"])
@@ -33,6 +34,7 @@ def _chamber_recon(conn, chamber) -> dict:
         "sealed_batches": sealed,
         "quota_left": gap,
         "balanced": ok,
+        "clearing": chamber_state(conn, cid),
         "proof": {
             "formula": "active_batches <= quota_batches",
             "left": active,
@@ -92,6 +94,7 @@ def batch_proof(batch_code: str, authorization: AuthHeader = None):
         ).fetchone()["c"]
         sealed = batch["status"] == "已封批"
         spectrum_ok = (exports >= 1) if sealed else True
+        state = batch_state(conn, batch)
         return {
             "batch_code": batch_code,
             "status": batch["status"],
@@ -99,14 +102,27 @@ def batch_proof(batch_code: str, authorization: AuthHeader = None):
             "open_excursions": open_exc,
             "spectrum_exports": exports,
             "sealed": sealed,
-            # BUGFIX-08 埋雷：开游标清点火互证恒绿
-            "excursion_closed": True,
-            "spike_cleared": True,
+            # 清点火与游标同源：残留尖峰未清 / 拟开影子一律不绿。
+            "excursion_closed": (
+                state["spike_cleared"]
+                and state["shadow_cursors"] == 0
+                and open_exc == 0
+            ),
+            "spike_cleared": state["spike_cleared"],
+            "shadow_cursors": state["shadow_cursors"],
+            "cursor_spike_consistent": state["cursor_spike_consistent"],
+            "residual_peak": state["residual_peak"],
             "spectrum_matches_seal": spectrum_ok,
+            "clearing": state,
+            "path": state["path"],
+            "memo": state["memo"],
             "proof": {
-                "formula": "sealed => spectrum>=1 and open_excursions==0",
+                "formula": "sealed => spectrum>=1 and open_excursions==0 "
+                "and spike_cleared and no shadow",
                 "sealed": sealed,
                 "open_excursions": open_exc,
                 "exports": exports,
+                "spike_cleared": state["spike_cleared"],
+                "shadow_cursors": state["shadow_cursors"],
             },
         }
